@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 
 	"github.com/alexellis/blinkt_go/sysfs/gpio"
@@ -85,6 +86,8 @@ func (bl *Blinkt) Clear() {
 
 // Show updates the LEDs with the values from SetPixel/Clear.
 func (bl *Blinkt) Show() {
+	bl.lock.Lock()
+	defer bl.lock.Unlock()
 	for i := 0; i < 4; i++ {
 		writeByte(0)
 	}
@@ -122,6 +125,7 @@ func (bl *Blinkt) SetPixel(p int, r int, g int, b int) *Blinkt {
 	bl.pixels[p][greenIndex] = g
 	bl.pixels[p][blueIndex] = b
 
+	bl.Show()
 	return bl
 
 }
@@ -184,6 +188,7 @@ func NewBlinkt(brightness ...float64) Blinkt {
 // Blinkt use the NewBlinkt function to initialize the pixels property.
 type Blinkt struct {
 	pixels [8][4]int
+	lock   sync.Mutex
 }
 
 func init() {
